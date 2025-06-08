@@ -2,23 +2,20 @@ FROM metasploitframework/metasploit-framework:latest
 
 USER root
 
-# Installe Python et pip
-RUN apk update && apk add --no-cache \
-    python3 \
-    py3-pip \
-    bash
+# Installer Python et pip
+RUN apk update && apk add --no-cache python3 py3-pip bash
 
-# Installe dépendances Python
+# Installer dépendances Python
 RUN pip3 install --no-cache-dir xmltodict
 
-WORKDIR /app
+# Définir un seul WORKDIR
+WORKDIR /msf
 
-# Copier le script Python et le template RC
-COPY metasploit_scan.py /app/metasploit_scan.py
-COPY scan_template.rc /app/scan_template.rc
+# Copier le script et le template RC à cet endroit
+COPY metasploit_scan.py scan_template.rc ./
 
 # Créer le dossier results
-RUN mkdir -p /app/results
+RUN mkdir -p /msf/results
 
-# Point d’entrée : lance le script
-ENTRYPOINT ["python3", "/app/metasploit_scan.py"]
+# Point d’entrée
+ENTRYPOINT ["python3", "metasploit_scan.py"]
