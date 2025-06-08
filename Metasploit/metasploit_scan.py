@@ -21,7 +21,7 @@ def generate_rc(ip):
     print(f"[+] scan_auto.rc généré pour {ip}")
     return AUTO_RC
 
-def run_msfconsole(rc_path):
+def run_msfconsole(rc_path, timeout=None):
     """Lance msfconsole avec le .rc généré et enregistre le spool."""
     os.makedirs(RESULTS_DIR, exist_ok=True)
     spool_file = os.path.join(RESULTS_DIR, "spool.txt")
@@ -35,9 +35,12 @@ def run_msfconsole(rc_path):
 
     with open(spool_file, 'w') as out:
         try:
-            subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT, timeout=60)  # Ajuste timeout ici (ou retire timeout=60)
+            if timeout:
+                subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT, timeout=timeout)
+            else:
+                subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT)
         except subprocess.TimeoutExpired:
-            print("[!] Timeout: msfconsole arrêté après 60 secondes")
+            print(f"[!] Timeout: msfconsole arrêté après {timeout} secondes")
     print(f"[+] Spool enregistré : {spool_file}")
     return spool_file
 
@@ -85,9 +88,9 @@ def main():
         return
 
     rc = generate_rc(ip)
-    spool = run_msfconsole(rc)
+    # Timeout à 120 secondes (2 minutes) ou None pour attendre la fin complète
+    spool = run_msfconsole(rc, timeout=120)
     parse_spool_to_json(spool, ip)
 
 if __name__ == "__main__":
     main()
-
