@@ -1,12 +1,12 @@
 spool /app/results/spool.txt
 
 use auxiliary/scanner/portscan/tcp
-set RHOSTS <%= target_ip %>
+set RHOSTS __TARGET_IP__
 set THREADS 10
 run
 
 use auxiliary/scanner/ssh/ssh_version
-set RHOSTS <%= target_ip %>
+set RHOSTS __TARGET_IP__
 run
 
 exit
