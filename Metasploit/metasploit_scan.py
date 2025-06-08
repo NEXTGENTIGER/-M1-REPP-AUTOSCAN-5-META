@@ -35,7 +35,7 @@ def run_msfconsole(rc_path):
 
     with open(spool_file, 'w') as out:
         try:
-            subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT, timeout=60)
+            subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT, timeout=60)  # Ajuste timeout ici (ou retire timeout=60)
         except subprocess.TimeoutExpired:
             print("[!] Timeout: msfconsole arrêté après 60 secondes")
     print(f"[+] Spool enregistré : {spool_file}")
@@ -90,3 +90,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
