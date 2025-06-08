@@ -1,21 +1,23 @@
-FROM metasploitframework/metasploit-framework:latest
+FROM metasploitframework/metasploit-framework:debian
 
 USER root
 
-# Installer Python et pip
-RUN apk update && apk add --no-cache python3 py3-pip bash
+# Installer Python, pip et bash
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip bash && \
+    rm -rf /var/lib/apt/lists/*
 
-# Installer dépendances Python
+# Installer la dépendance Python pour XML parsing (si besoin dans ton script)
 RUN pip3 install --no-cache-dir xmltodict
 
-# Définir un seul WORKDIR
+# Déclarer le répertoire de travail
 WORKDIR /msf
 
-# Copier le script et le template RC à cet endroit
+# Copier le script de scan et le template RC dans le conteneur
 COPY metasploit_scan.py scan_template.rc ./
 
-# Créer le dossier results
+# Créer le dossier où seront écrits les résultats JSON
 RUN mkdir -p /msf/results
 
-# Point d’entrée
+# Par défaut, exécuter le script Python
 ENTRYPOINT ["python3", "metasploit_scan.py"]
