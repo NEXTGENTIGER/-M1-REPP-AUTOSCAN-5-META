@@ -4,6 +4,7 @@ import subprocess
 import re
 import json
 import datetime
+import socket
 
 # Répertoires et chemins
 BASE_DIR     = "/app"
@@ -11,14 +12,32 @@ TEMPLATE_RC  = os.path.join(BASE_DIR, "scan_template.rc")
 AUTO_RC      = os.path.join(BASE_DIR, "scan_auto.rc")
 RESULTS_DIR  = os.path.join(BASE_DIR, "results")
 
+def get_local_ip():
+    """Détecte automatiquement l’IP locale de la machine/containeur."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # Connexion à un IP externe pour déterminer l'interface utilisée
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
+
 def generate_rc(ip):
-    """Génère scan_auto.rc à partir du template en remplaçant __TARGET_IP__."""
+    """Génère scan_auto.rc à partir du template, remplace __TARGET_IP__ et __LHOST__."""
     with open(TEMPLATE_RC, 'r') as f:
         content = f.read()
+
+    local_ip = os.environ.get("LHOST") or get_local_ip()
+
     content = content.replace("__TARGET_IP__", ip)
+    content = content.replace("__LHOST__", local_ip)
+
     with open(AUTO_RC, 'w') as f:
         f.write(content)
-    print(f"[+] scan_auto.rc généré pour {ip}")
+    print(f"[+] scan_auto.rc généré pour {ip} avec LHOST={local_ip}")
     return AUTO_RC
 
 def run_msfconsole(rc_path, timeout=None):
@@ -88,7 +107,7 @@ def main():
         return
 
     rc = generate_rc(ip)
-    # Timeout à 120 secondes (2 minutes) ou None pour attendre la fin complète
+    # Timeout à 120 secondes (2 minutes), à ajuster ou None pour sans limite
     spool = run_msfconsole(rc, timeout=120)
     parse_spool_to_json(spool, ip)
 
