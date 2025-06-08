@@ -10,7 +10,6 @@ BASE_DIR     = "/app"
 TEMPLATE_RC  = os.path.join(BASE_DIR, "scan_template.rc")
 AUTO_RC      = os.path.join(BASE_DIR, "scan_auto.rc")
 RESULTS_DIR  = os.path.join(BASE_DIR, "results")
-MSFCONSOLE   = "/opt/metasploit-framework/bin/msfconsole"  # Chemin correct du binaire
 
 def generate_rc(ip):
     """Génère scan_auto.rc à partir du template en remplaçant __TARGET_IP__."""
@@ -23,16 +22,20 @@ def generate_rc(ip):
     return AUTO_RC
 
 def run_msfconsole(rc_path):
-    """Lance msfconsole en mode silencieux avec le .rc généré, et enregistre le spool."""
+    """Lance msfconsole avec le .rc généré et enregistre le spool."""
     os.makedirs(RESULTS_DIR, exist_ok=True)
     spool_file = os.path.join(RESULTS_DIR, "spool.txt")
     print("[*] Lancement de msfconsole...")
 
-    cmd = [MSFCONSOLE, "-q", "-r", rc_path]
+    # Appel simplifié, msfconsole est dans le PATH dans l'image officielle
+    cmd = [
+        "msfconsole",
+        "-q",
+        "-r", rc_path
+    ]
 
     with open(spool_file, 'w') as out:
         subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT)
-
     print(f"[+] Spool enregistré : {spool_file}")
     return spool_file
 
@@ -66,7 +69,6 @@ def parse_spool_to_json(spool_path, ip):
         "scans": scans,
         "exploits": exploits
     }
-
     ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     out_json = os.path.join(RESULTS_DIR, f"result-{ip.replace('.', '_')}-{ts}.json")
     with open(out_json, 'w') as jf:
