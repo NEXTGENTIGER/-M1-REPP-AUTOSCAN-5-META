@@ -76,7 +76,7 @@ services:
     environment:
       - TARGET_IP
     volumes:
-      - ./results:/msf/results
+      - ./Metasploit/results:/app/results
     working_dir: /msf
     entrypoint: ["python3", "metasploit_scan.py"]
     networks:
