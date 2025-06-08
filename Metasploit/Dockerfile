@@ -1,28 +1,26 @@
-FROM ubuntu:20.04
+FROM metasploitframework/metasploit-framework:latest
 
-ENV DEBIAN_FRONTEND=noninteractive
+USER root
 
-# Installer dépendances système + ruby
-RUN apt-get update && \
-    apt-get install -y \
-    curl gnupg2 postgresql git-core ruby ruby-dev libpq-dev \
-    build-essential libreadline-dev libssl-dev zlib1g-dev \
-    libxml2-dev libxslt1-dev libyaml-dev libsqlite3-dev sqlite3 \
-    libgmp-dev autoconf libtool libffi-dev python3 python3-pip \
-    && rm -rf /var/lib/apt/lists/*
+# Met à jour les dépôts apk et installe python3, pip, bash et postgresql-client
+RUN sed -i 's|dl-cdn.alpinelinux.org|dl-4.alpinelinux.org|g' /etc/apk/repositories && \
+    apk update && apk add --no-cache \
+    python3 \
+    py3-pip \
+    postgresql-client \
+    bash
 
-# Installer Metasploit Framework
-RUN git clone https://github.com/rapid7/metasploit-framework /opt/metasploit-framework && \
-    cd /opt/metasploit-framework && \
-    gem install bundler && \
-    bundle install
+# Installe les dépendances Python
+RUN pip3 install --no-cache-dir xmltodict
 
-ENV PATH="/opt/metasploit-framework:$PATH"
+WORKDIR /app
 
-WORKDIR /msf
+# Copier le script Python et le template RC dans le conteneur
+COPY msf_auto_scan.py /app/msf_auto_scan.py
+COPY metasploit/scan_template.rc /app/metasploit/scan_template.rc
 
-# Copier les scripts dans le conteneur
-COPY metasploit_scan.py scan_template.rc ./
-RUN mkdir -p /msf/results
+# Expose éventuellement le port RPC si tu l’utilises (optionnel)
+# EXPOSE 55553
 
-ENTRYPOINT ["python3", "metasploit_scan.py"]
+# Lancement par défaut : exécute ton script Python qui gère le scan avec Metasploit
+CMD ["python3", "/app/msf_auto_scan.py"]
