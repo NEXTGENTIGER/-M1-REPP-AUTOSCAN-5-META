@@ -1,14 +1,15 @@
-# Utilise Ubuntu 20.04 LTS (métasploit et msfconsole disponibles)
-FROM ubuntu:20.04
+# Utiliser Kali Linux (rolling) pour avoir metasploit-framework
+FROM kalilinux/kali-rolling
 
+USER root
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Installer Metasploit Framework et Python
+# Mettre à jour et installer Metasploit + Python
 RUN apt-get update && \
     apt-get install -y metasploit-framework python3 python3-pip bash && \
     rm -rf /var/lib/apt/lists/*
 
-# Installer dépendances Python
+# Installer dépendances Python supplémentaires
 RUN pip3 install --no-cache-dir xmltodict
 
 # Définir le dossier de travail
@@ -20,5 +21,5 @@ COPY metasploit_scan.py scan_template.rc ./
 # Créer le dossier pour les résultats
 RUN mkdir -p /msf/results
 
-# Point d'entrée : lance ton script Python
+# Entrypoint : lancer ton script Python
 ENTRYPOINT ["python3", "metasploit_scan.py"]
