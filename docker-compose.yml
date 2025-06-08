@@ -77,7 +77,7 @@ services:
     environment:
       - TARGET_IP
     volumes:
-      - ./results:/msf/results           # Metasploit écrit ses JSON ici
+      - ./results:/app/results           # Metasploit écrit ses JSON ici
     working_dir: /app
     entrypoint: ["python3", "metasploit_scan.py"]
     networks:
