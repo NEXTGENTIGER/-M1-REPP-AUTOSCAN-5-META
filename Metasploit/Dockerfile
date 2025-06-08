@@ -1,15 +1,17 @@
-FROM metasploitframework/metasploit-framework:latest
+# Utilise Ubuntu 20.04 LTS (métasploit et msfconsole disponibles)
+FROM ubuntu:20.04
 
-USER root
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Installer Python, pip et bash
-RUN apk update && \
-    apk add --no-cache python3 py3-pip bash
+# Installer Metasploit Framework et Python
+RUN apt-get update && \
+    apt-get install -y metasploit-framework python3 python3-pip bash && \
+    rm -rf /var/lib/apt/lists/*
 
-# Installer dépendance Python pour parsing si nécessaire
+# Installer dépendances Python
 RUN pip3 install --no-cache-dir xmltodict
 
-# Définir le répertoire de travail
+# Définir le dossier de travail
 WORKDIR /msf
 
 # Copier le script Python et le template RC
@@ -18,5 +20,5 @@ COPY metasploit_scan.py scan_template.rc ./
 # Créer le dossier pour les résultats
 RUN mkdir -p /msf/results
 
-# Par défaut, lancer le script Python
+# Point d'entrée : lance ton script Python
 ENTRYPOINT ["python3", "metasploit_scan.py"]
