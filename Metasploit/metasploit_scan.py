@@ -4,26 +4,31 @@ import re
 import json
 import datetime
 
-def generate_rc_file(ip, rc_template_path='/app/scan_template.rc', rc_out_path='/app/scan_auto.rc'):
-    with open(rc_template_path, 'r') as f:
+BASE_DIR = "/msf"
+RESULTS_DIR = os.path.join(BASE_DIR, "results")
+TEMPLATE_RC = os.path.join(BASE_DIR, "scan_template.rc")
+AUTO_RC = os.path.join(BASE_DIR, "scan_auto.rc")
+
+def generate_rc_file(ip):
+    with open(TEMPLATE_RC, 'r') as f:
         content = f.read()
-    content = content.replace('192.168.75.130', ip)
-    with open(rc_out_path, 'w') as f:
+    content = content.replace("192.168.75.130", ip)
+    with open(AUTO_RC, 'w') as f:
         f.write(content)
-    print(f"[+] Fichier RC généré avec IP: {ip}")
-    return rc_out_path
+    print(f"[+] Fichier RC généré avec IP : {ip}")
+    return AUTO_RC
 
 def run_msfconsole(rc_path):
-    print("[*] Lancement de Metasploit avec msfconsole...")
-    os.makedirs('/app/results', exist_ok=True)
-    spool_path = '/app/results/spool.txt'
-    cmd = ['msfconsole', '-q', '-r', rc_path]
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    spool_path = os.path.join(RESULTS_DIR, "spool.txt")
+    print("[*] Lancement de Metasploit...")
+    cmd = ["msfconsole", "-q", "-r", rc_path]
     with open(spool_path, 'w') as f:
         subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT)
-    print(f"[+] Scan terminé. Résultat enregistré dans {spool_path}")
+    print(f"[+] Résultats enregistrés dans : {spool_path}")
     return spool_path
 
-def parse_spool_to_json(spool_path, target_ip):
+def parse_spool_to_json(spool_path, ip):
     with open(spool_path, 'r') as f:
         lines = f.readlines()
 
@@ -61,23 +66,24 @@ def parse_spool_to_json(spool_path, target_ip):
                 }
             })
 
-    output_data = {
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    json_path = os.path.join(RESULTS_DIR, f"result-{ip.replace('.', '_')}-{timestamp}.json")
+
+    final_output = {
         "scan_results": results,
         "exploit_results": exploits
     }
 
-    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    json_path = f"/app/results/result-{target_ip.replace('.', '_')}-{timestamp}.json"
     with open(json_path, 'w') as f:
-        json.dump(output_data, f, indent=2)
+        json.dump(final_output, f, indent=2)
     
-    print(f"[+] Rapport JSON enregistré dans : {json_path}")
+    print(f"[+] Rapport JSON écrit dans : {json_path}")
     return json_path
 
 def main():
-    ip = os.environ.get("TARGET_IP") or input("Merci de saisir l'adresse IP cible : ").strip()
+    ip = os.environ.get("TARGET_IP")
     if not ip:
-        print("[-] Aucune IP fournie. Abandon.")
+        print("[-] Aucune IP dans la variable TARGET_IP. Abandon.")
         return
 
     rc_path = generate_rc_file(ip)
