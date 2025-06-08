@@ -1,3 +1,5 @@
+spool /app/results/spool.txt
+
 use auxiliary/scanner/portscan/tcp
 set RHOSTS <%= target_ip %>
 set THREADS 10
