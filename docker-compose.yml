@@ -68,6 +68,19 @@ services:
     networks:
       - zapnet
 
+  metasploit:
+    build:
+      context: ./Metasploit
+      dockerfile: Dockerfile
+    container_name: metasploit
+    ports:
+      - "55553:55553" # RPC port
+    volumes:
+      - ./results:/msf/results
+    networks:
+      - secnet
+    entrypoint: ["/bin/sh", "-c", "msfrpcd -P test -S -a 0.0.0.0 -p 55553 -n"]
+
 networks:
   secnet:
     driver: bridge
