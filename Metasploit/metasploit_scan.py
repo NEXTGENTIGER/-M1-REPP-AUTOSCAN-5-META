@@ -27,7 +27,6 @@ def run_msfconsole(rc_path):
     spool_file = os.path.join(RESULTS_DIR, "spool.txt")
     print("[*] Lancement de msfconsole...")
 
-    # Chemin complet corrigé vers msfconsole dans le conteneur
     cmd = [
         "/usr/src/metasploit-framework/msfconsole",
         "-q",
@@ -35,7 +34,10 @@ def run_msfconsole(rc_path):
     ]
 
     with open(spool_file, 'w') as out:
-        subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT)
+        try:
+            subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT, timeout=60)
+        except subprocess.TimeoutExpired:
+            print("[!] Timeout: msfconsole arrêté après 60 secondes")
     print(f"[+] Spool enregistré : {spool_file}")
     return spool_file
 
