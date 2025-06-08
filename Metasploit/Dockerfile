@@ -9,6 +9,9 @@ RUN sed -i 's|dl-cdn.alpinelinux.org|dl-4.alpinelinux.org|g' /etc/apk/repositori
     postgresql-client \
     bash
 
+# Fix : rendre msfconsole globalement accessible
+RUN ln -s /opt/metasploit-framework/msfconsole /usr/local/bin/msfconsole
+
 RUN pip install xmltodict jinja2
 
 WORKDIR /app
