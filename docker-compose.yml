@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: nmapscanner
     volumes:
-      - ./results:/app/results
+      - ./results:/app/results           # Nmap écrit ici ses JSON
     working_dir: /app
     entrypoint: ["python3", "nmapscan.py"]
     networks:
@@ -18,22 +18,21 @@ services:
       context: ./Tshark
       dockerfile: Dockerfile
     container_name: tshark
-    volumes:
-      - ./results:/app/results
-    working_dir: /app
-    entrypoint: ["python3", "capture_tshark.py"]
     cap_add:
       - NET_RAW
       - NET_ADMIN
     network_mode: "host"
+    volumes:
+      - ./results:/app/results           # TShark écrit ici ses captures/logs
+    working_dir: /app
+    entrypoint: ["python3", "capture_tshark.py"]
 
   zap:
     image: zaproxy/zap-stable
     container_name: zap
     command:
       [
-        "zap.sh",
-        "-daemon",
+        "zap.sh", "-daemon",
         "-host", "0.0.0.0",
         "-port", "8080",
         "-config", "api.disablekey=true",
@@ -43,7 +42,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./results:/zap/wrk
+      - ./results:/zap/wrk               # ZAP écrit ici son résultat raw
     networks:
       - zapnet
     healthcheck:
@@ -64,7 +63,9 @@ services:
       - TARGET_URL
       - ZAP_API_URL=http://zap:8080
     volumes:
-      - ./results:/app/results
+      - ./results:/app/results           # zapscanner écrit ses JSON ici
+    working_dir: /app
+    entrypoint: ["python3", "zapscan.py"]
     networks:
       - zapnet
 
@@ -76,7 +77,7 @@ services:
     environment:
       - TARGET_IP
     volumes:
-      - ./Metasploit/results:/app/results
+      - ./results:/msf/results           # Metasploit écrit ses JSON ici
     working_dir: /msf
     entrypoint: ["python3", "metasploit_scan.py"]
     networks:
