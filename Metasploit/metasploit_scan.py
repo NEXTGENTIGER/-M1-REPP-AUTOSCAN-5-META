@@ -1,89 +1,61 @@
-#!/usr/bin/env python3
 import os
-import subprocess
-import re
+import time
 import json
-import datetime
+import xmltodict
+import subprocess
+from jinja2 import Template
 
-# Répertoires et chemins
-BASE_DIR     = "/app"
-TEMPLATE_RC  = os.path.join(BASE_DIR, "scan_template.rc")
-AUTO_RC      = os.path.join(BASE_DIR, "scan_auto.rc")
-RESULTS_DIR  = os.path.join(BASE_DIR, "results")
+def generate_rc_file(target_ip, rc_path, template_path):
+    with open(template_path) as f:
+        template = Template(f.read())
+    rendered = template.render(target_ip=target_ip)
+    with open(rc_path, "w") as f:
+        f.write(rendered)
+    print(f"[+] scan_auto.rc généré pour {target_ip}")
 
-def generate_rc(ip):
-    """Génère scan_auto.rc à partir du template en remplaçant __TARGET_IP__."""
-    with open(TEMPLATE_RC, 'r') as f:
-        content = f.read()
-    content = content.replace("__TARGET_IP__", ip)
-    with open(AUTO_RC, 'w') as f:
-        f.write(content)
-    print(f"[+] scan_auto.rc généré pour {ip}")
-    return AUTO_RC
-
-def run_msfconsole(rc_path):
-    """Lance msfconsole en mode silencieux avec le .rc généré, et enregistre le spool."""
-    os.makedirs(RESULTS_DIR, exist_ok=True)
-    spool_file = os.path.join(RESULTS_DIR, "spool.txt")
+def run_msfconsole(rc_path, spool_path):
     print("[*] Lancement de msfconsole...")
-    # Appel direct du binaire interne Metasploit
-    cmd = [
-        "ruby",
-        "/opt/metasploit-framework/msfconsole",
-        "-q",
-        "-r", rc_path
-    ]
-    with open(spool_file, 'w') as out:
-        subprocess.run(cmd, stdout=out, stderr=subprocess.STDOUT)
-    print(f"[+] Spool enregistré : {spool_file}")
-    return spool_file
+    cmd = ["msfconsole", "-q", "-r", rc_path]
+    subprocess.run(cmd)
 
-def parse_spool_to_json(spool_path, ip):
-    """Parse le spool.txt pour extraire scans et exploits, puis génère un JSON."""
-    with open(spool_path, 'r') as f:
-        lines = f.readlines()
-
-    scans = []
-    exploits = []
-    for line in lines:
-        h = re.search(r'Host: (\d+\.\d+\.\d+\.\d+)', line)
-        p = re.search(r'Port: (\d+)/tcp', line)
-        s = re.search(r'State: (\w+)', line)
-        m = re.search(r'\[\*\] Meterpreter session (\d+) opened.*?(\d+\.\d+\.\d+\.\d+)', line)
-
-        if h and p and s:
-            scans.append({
-                "host": h.group(1),
-                "port": int(p.group(1)),
-                "state": s.group(1)
-            })
-        if m:
-            exploits.append({
-                "session_id": int(m.group(1)),
-                "host": m.group(2)
-            })
-
-    report = {
-        "target": ip,
-        "scans": scans,
-        "exploits": exploits
+def parse_spool(spool_path):
+    result = {
+        "target": os.environ["TARGET_IP"],
+        "scans": [],
+        "exploits": []
     }
-    ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    out_json = os.path.join(RESULTS_DIR, f"result-{ip.replace('.', '_')}-{ts}.json")
-    with open(out_json, 'w') as jf:
-        json.dump(report, jf, indent=2)
-    print(f"[+] Rapport JSON écrit : {out_json}")
-    return out_json
+    try:
+        with open(spool_path, "r") as f:
+            lines = f.readlines()
+        for line in lines:
+            if "[+] " in line:
+                result["scans"].append(line.strip())
+            if "[*] " in line and "Exploit" in line:
+                result["exploits"].append(line.strip())
+    except FileNotFoundError:
+        print("[!] spool.txt introuvable")
+    return result
 
 def main():
-    ip = os.environ.get("TARGET_IP")
-    if not ip:
-        print("❌ Variable TARGET_IP non définie. Abandon.")
+    target_ip = os.environ.get("TARGET_IP")
+    if not target_ip:
+        print("[!] TARGET_IP non défini")
         return
 
-    rc = generate_rc(ip)
-    spool = run_msfconsole(rc)
-    parse_spool_to_json(spool, ip)
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    rc_path = "/app/scan_auto.rc"
+    template_path = "/app/scan_template.rc"
+    spool_path = "/app/results/spool.txt"
+    json_path = f"/app/results/result-{target_ip.replace('.', '_')}-{timestamp}.json"
+
+    generate_rc_file(target_ip, rc_path, template_path)
+    run_msfconsole(rc_path, spool_path)
+    print(f"[+] Spool enregistré : {spool_path}")
+
+    result = parse_spool(spool_path)
+    with open(json_path, "w") as f:
+        json.dump(result, f, indent=2)
+    print(f"[+] Rapport JSON écrit : {json_path}")
 
 if __name__ == "__main__":
     main()
