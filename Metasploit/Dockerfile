@@ -1,25 +1,18 @@
-# Utiliser Kali Linux (rolling) pour avoir metasploit-framework
-FROM kalilinux/kali-rolling
+FROM metasploitframework/metasploit-framework:latest
 
 USER root
-ENV DEBIAN_FRONTEND=noninteractive
+# Remplacer le miroir APK par un miroir officiel stable
+RUN sed -i 's|dl-cdn.alpinelinux.org|dl-4.alpinelinux.org|g' /etc/apk/repositories && \
+    apk update && apk add --no-cache \
+    python3 \
+    py3-pip \
+    postgresql-client \
+    bash
 
-# Mettre à jour et installer Metasploit + Python
-RUN apt-get update && \
-    apt-get install -y metasploit-framework python3 python3-pip bash && \
-    rm -rf /var/lib/apt/lists/*
+RUN pip install xmltodict
 
-# Installer dépendances Python supplémentaires
-RUN pip3 install --no-cache-dir xmltodict
+WORKDIR /app
 
-# Définir le dossier de travail
-WORKDIR /msf
-
-# Copier le script Python et le template RC
-COPY metasploit_scan.py scan_template.rc ./
-
-# Créer le dossier pour les résultats
-RUN mkdir -p /msf/results
-
-# Entrypoint : lancer ton script Python
+COPY metasploit_scan.py /app/metasploit_scan.py
+COPY scan_template.rc /app/scan_template.rc
 ENTRYPOINT ["python3", "metasploit_scan.py"]
