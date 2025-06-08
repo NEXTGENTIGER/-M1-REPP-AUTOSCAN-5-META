@@ -27,9 +27,9 @@ def run_msfconsole(rc_path):
     spool_file = os.path.join(RESULTS_DIR, "spool.txt")
     print("[*] Lancement de msfconsole...")
 
-    # Appel simplifié, msfconsole est dans le PATH dans l'image officielle
+    # Utilisation du chemin complet vers msfconsole dans le conteneur
     cmd = [
-        "msfconsole",
+        "/usr/local/bin/msfconsole",
         "-q",
         "-r", rc_path
     ]
