@@ -27,9 +27,9 @@ def run_msfconsole(rc_path):
     spool_file = os.path.join(RESULTS_DIR, "spool.txt")
     print("[*] Lancement de msfconsole...")
 
-    # Utilisation du chemin complet vers msfconsole dans le conteneur
+    # Chemin complet corrigé vers msfconsole dans le conteneur
     cmd = [
-        "/usr/local/bin/msfconsole",
+        "/usr/src/metasploit-framework/msfconsole",
         "-q",
         "-r", rc_path
     ]
