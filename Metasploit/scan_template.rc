@@ -1,5 +1,3 @@
-spool /app/results/spool.txt
-
 # Scan de ports communs
 use auxiliary/scanner/portscan/tcp
 set RHOSTS __TARGET_IP__
